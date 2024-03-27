@@ -1,12 +1,16 @@
 from collections import defaultdict
 import numpy as np
 import pysam
+import sys
+
+sys.setrecursionlimit(10**8)
 
 # Some clarification on the types on this module:
 # pysam.AlignedSegment is the type of the reads,
 # a list of pysam.AlignedSegment is a fragment,
-# a list of fragment (ie a list of list of pysam.AlignedSegment) is a cluster.
-# When we cluster the reads we generate a list of clusters, which is a list of list of list of pysam.AlignedSegment.
+# a list of fragments (i.e. a list of list of pysam.AlignedSegment) is a cluster.
+# When we cluster the reads we generate a list of clusters, which is a list of
+# list of list of pysam.AlignedSegment.
 
 
 def cluster_reads(
