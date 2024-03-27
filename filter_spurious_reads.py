@@ -6,38 +6,34 @@ import pysam
 # pysam.AlignedSegment is the type of the reads,
 # a list of pysam.AlignedSegment is a fragment,
 # a list of fragment (ie a list of list of pysam.AlignedSegment) is a cluster.
-# When we cluster the reads we generate a list of clusters, which is a list of list of list of pysam.AlignedSegment.
+# When we cluster the reads we generate a list of clusters, which is a
+# list of list of list of pysam.AlignedSegment.
 
 
 def cluster_reads(
     reads_dict: dict, cluster_size: int
 ) -> list[list[list[pysam.AlignedSegment]]]:
     cluster_list: list[list[list[pysam.AlignedSegment]]] = []
-    if len(reads_dict) == 0:
-        return cluster_list
-    positions = list(reads_dict.keys())
-    positions.sort()
-    positions_array = np.array(positions)
-    X = positions_array - positions_array[:, np.newaxis]
-    # X is a #reads x #reads x 2 array of differences between read start and end positions
-    # i.e. the following holds true
-    # for i in range(len(positions_array)):
-    #     assert np.all(np.isclose(X[i], positions_array - positions_array[i]))
-    # Next we convert these to distances between the reads in the taxi-cab metric
-    distances = np.abs(np.sum(X, axis=2))
-    # And then find the total distance from each read to all other reads
-    total_distances = np.sum(distances, axis=1)
-    # And finally find the read with the smallest total distance
-    center = np.argmin(total_distances)
-    # Next we find all the reads that are within cluster_size of center
-    # and pop them
-    reads_to_be_merged = []
-    for start, end in positions_array[np.where(distances[center] < cluster_size)]:
-        # print(start,end, len(reads_dict[start,end]))
-        reads_to_be_merged.append(reads_dict.pop((start, end)))
-    # print()
-    cluster_list.append(reads_to_be_merged)
-    cluster_list.extend(cluster_reads(reads_dict, cluster_size))
+    while reads_dict:
+        positions = np.array(sorted(reads_dict))
+        X = positions - positions[:, np.newaxis]
+        # X is a #reads x #reads x 2 array of differences between read start and
+        # end positions. I.e. the following holds true
+        # for i in range(len(positions)):
+        #     assert np.all(np.isclose(X[i], positions - positions[i]))
+        # Next we convert these to distances between the reads in the taxi-cab metric.v
+        distances = np.abs(np.sum(X, axis=2))
+        # And then find the total distance from each read to all other reads.
+        total_distances = np.sum(distances, axis=1)
+        # And finally find the read with the smallest total distance.
+        center = np.argmin(total_distances)
+        # Next we find all the reads that are within cluster_size of center
+        # and pop them.
+        reads_to_be_merged = []
+        for start, end in positions[np.where(distances[center] < cluster_size)]:
+            reads_to_be_merged.append(reads_dict.pop((start, end)))
+        cluster_list.append(reads_to_be_merged)
+
     return cluster_list
 
 
